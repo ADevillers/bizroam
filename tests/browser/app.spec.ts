@@ -96,3 +96,53 @@ test("wrong password reveals no protected data", async ({ page }) => {
   const r = await page.request.get("/api/config");
   expect(r.status()).toBe(401);
 });
+test("judge invitation signs in once, clears the URL and does not start research", async ({
+  page,
+}) => {
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  let logins = 0,
+    walks = 0;
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/auth/login")) logins++;
+    if (request.url().endsWith("/api/walks") && request.method() === "POST")
+      walks++;
+  });
+  await page.goto("/#password=e2e-password");
+  await expect(
+    page.getByRole("heading", { name: "Around the corner.", exact: true }),
+  ).toBeVisible();
+  expect(new URL(page.url()).hash).toBe("");
+  expect(logins).toBe(1);
+  expect(walks).toBe(0);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("heading", { name: "Around the corner.", exact: true }),
+  ).toBeVisible();
+  expect(logins).toBe(1);
+  await page.goto("/#password=e2e-password");
+  await expect(
+    page.getByRole("heading", { name: "Around the corner.", exact: true }),
+  ).toBeVisible();
+  expect(logins).toBe(1);
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Welcome to/ })).toBeVisible();
+  expect(logins).toBe(1);
+  expect(browserErrors).toEqual([]);
+});
+test("invalid judge invitation keeps authentication and manual login intact", async ({
+  page,
+}) => {
+  await page.goto("/#password=incorrect-invitation");
+  await expect(page.getByRole("alert")).toHaveText(
+    "That password does not match.",
+  );
+  expect(new URL(page.url()).hash).toBe("");
+  expect((await page.request.get("/api/config")).status()).toBe(401);
+  await page.getByLabel("Access password").fill("e2e-password");
+  await page.getByRole("button", { name: "Let’s explore" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Around the corner.", exact: true }),
+  ).toBeVisible();
+});

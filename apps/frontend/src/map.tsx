@@ -89,6 +89,8 @@ export function MapView({
     const m = map.current;
     if (!group || !m) return;
     const draw = () => {
+      const element = el.current;
+      if (!element || !element.isConnected) return;
       group.clearLayers();
       const occupied: {
         x: number;
@@ -96,11 +98,19 @@ export function MapView({
         width: number;
         height: number;
       }[] = [];
-      const mapRect = el.current!.getBoundingClientRect();
-      el.current!.closest('.map-wrap')?.querySelectorAll('.map-top, .map-bottom, .map-value-legend').forEach(node => {
-        const r = node.getBoundingClientRect();
-        occupied.push({ x: r.left - mapRect.left, y: r.top - mapRect.top, width: r.width, height: r.height });
-      });
+      const mapRect = element.getBoundingClientRect();
+      element
+        .closest(".map-wrap")
+        ?.querySelectorAll(".map-top, .map-bottom, .map-value-legend")
+        .forEach((node) => {
+          const r = node.getBoundingClientRect();
+          occupied.push({
+            x: r.left - mapRect.left,
+            y: r.top - mapRect.top,
+            width: r.width,
+            height: r.height,
+          });
+        });
       let labelsPlaced = 0;
       const sorted = [...candidates].sort(
         (a, b) =>
@@ -123,20 +133,60 @@ export function MapView({
         const pt = m.latLngToContainerPoint([c.lat, c.lng]);
         const width = Math.min(
           240,
-          Math.max(125, name.textContent.length * 7 + 24, meta.textContent.length * 5 + 24),
+          Math.max(
+            125,
+            name.textContent.length * 7 + 24,
+            meta.textContent.length * 5 + 24,
+          ),
         );
         const placements = [
-          { direction: 'top' as const, x: pt.x - width / 2, y: pt.y - radius - 54, offset: [0, -radius] as [number, number] },
-          { direction: 'bottom' as const, x: pt.x - width / 2, y: pt.y + radius + 12, offset: [0, radius] as [number, number] },
-          { direction: 'right' as const, x: pt.x + radius + 12, y: pt.y - 23, offset: [radius, 0] as [number, number] },
-          { direction: 'left' as const, x: pt.x - radius - width - 12, y: pt.y - 23, offset: [-radius, 0] as [number, number] },
+          {
+            direction: "top" as const,
+            x: pt.x - width / 2,
+            y: pt.y - radius - 54,
+            offset: [0, -radius] as [number, number],
+          },
+          {
+            direction: "bottom" as const,
+            x: pt.x - width / 2,
+            y: pt.y + radius + 12,
+            offset: [0, radius] as [number, number],
+          },
+          {
+            direction: "right" as const,
+            x: pt.x + radius + 12,
+            y: pt.y - 23,
+            offset: [radius, 0] as [number, number],
+          },
+          {
+            direction: "left" as const,
+            x: pt.x - radius - width - 12,
+            y: pt.y - 23,
+            offset: [-radius, 0] as [number, number],
+          },
         ];
-        const placement = labelsPlaced < (m.getZoom() >= 17 ? 18 : 10) ? placements.find(box =>
-          box.x >= 4 && box.x + width <= m.getSize().x - 4 && box.y >= 4 && box.y + 45 <= m.getSize().y - 4 &&
-          !occupied.some(b => box.x < b.x + b.width + 8 && box.x + width + 8 > b.x && box.y < b.y + b.height + 8 && box.y + 53 > b.y)
-        ) : undefined;
+        const placement =
+          labelsPlaced < (m.getZoom() >= 17 ? 18 : 10)
+            ? placements.find(
+                (box) =>
+                  box.x >= 4 &&
+                  box.x + width <= m.getSize().x - 4 &&
+                  box.y >= 4 &&
+                  box.y + 45 <= m.getSize().y - 4 &&
+                  !occupied.some(
+                    (b) =>
+                      box.x < b.x + b.width + 8 &&
+                      box.x + width + 8 > b.x &&
+                      box.y < b.y + b.height + 8 &&
+                      box.y + 53 > b.y,
+                  ),
+              )
+            : undefined;
         const permanent = Boolean(placement);
-        if (placement) { occupied.push({ ...placement, width, height: 45 }); labelsPlaced++; }
+        if (placement) {
+          occupied.push({ ...placement, width, height: 45 });
+          labelsPlaced++;
+        }
         const marker = L.circleMarker([c.lat, c.lng], {
           radius,
           color: "#1a2025",

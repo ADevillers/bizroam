@@ -1,5 +1,9 @@
 # Bizroam ↗
 
+# [🚀 TEST ME — OPEN BIZROAM](https://bizroam.wip.dev.furet.network/#password=ClineParallel-sCZy1WCbV_KA)
+
+**Hackathon judges:** click the link to sign in automatically with our temporary demo password. Then choose your interests, allow location, and start exploring.
+
 Discover the companies hiding in plain sight.
 
 Bizroam is a personal company discovery agent with a live map, configurable interests, sourced profiles, and a collection of the businesses you pass. Codex chooses what to investigate, OpenStreetMap supplies the map and office locations, Composio finds public Hacker News discussions, and Parallel verifies and researches the companies.

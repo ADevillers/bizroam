@@ -52,6 +52,21 @@ import {
   type Encounter,
 } from "../../../packages/shared/src/schema";
 import "./style.css";
+// Invitation credentials stay out of HTTP URLs and are removed before API calls.
+const invitation = new URLSearchParams(window.location.hash.slice(1));
+let invitationPassword = invitation.get("password");
+if (invitationPassword !== null) {
+  invitation.delete("password");
+  window.history.replaceState(
+    null,
+    "",
+    window.location.pathname +
+      window.location.search +
+      (invitation.size ? `#${invitation.toString()}` : ""),
+  );
+  if (!invitationPassword || invitationPassword.length > 200)
+    invitationPassword = null;
+}
 let csrf = "";
 async function api<T>(
   path: string,
@@ -113,6 +128,13 @@ function App() {
     active = useRef(false);
   walkRef.current = walk;
   positionRef.current = position;
+  useEffect(() => {
+    if (auth === true) invitationPassword = null;
+    if (auth !== false || !invitationPassword) return;
+    const supplied = invitationPassword;
+    invitationPassword = null;
+    void signIn(supplied);
+  }, [auth]);
   useLayoutEffect(() => {
     api<any>("/session")
       .then((d) => {
@@ -269,16 +291,20 @@ function App() {
   }, [walk?.id, ingest]);
   async function login(e: React.FormEvent) {
     e.preventDefault();
+    await signIn(password);
+  }
+  async function signIn(suppliedPassword: string) {
     setLoginBusy(true);
     setError("");
     try {
-      const d = await api<any>("/auth/login", { password });
+      const d = await api<any>("/auth/login", { password: suppliedPassword });
       csrf = d.csrf;
       setPassword("");
       setAuth(true);
     } catch (e: any) {
       setError(e.message);
     } finally {
+      setPassword("");
       setLoginBusy(false);
     }
   }
