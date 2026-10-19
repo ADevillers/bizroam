@@ -1,0 +1,14 @@
+[Unit]
+Description=Network isolation for the Bizroam containers only
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/agent/bizroam/current/deploy/firewall.py
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

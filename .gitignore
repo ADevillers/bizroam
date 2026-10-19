@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-ui/
+.env*
+!.env.example
+.data/
+.secrets/
+playwright-report/
+test-results/
+*.sqlite*
+
+__pycache__/
+*.pyc

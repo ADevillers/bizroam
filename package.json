@@ -1,0 +1,56 @@
+{
+  "name": "bizroam",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.server.json && vite build --config apps/frontend/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p apps/frontend/tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "dev": "tsx services/web/src/index.ts",
+    "tools": "tsx services/tools/src/index.ts",
+    "worker": "tsx services/worker/src/index.ts",
+    "secrets": "tsx scripts/setup.ts",
+    "smoke": "tsx scripts/live-smoke.ts"
+  },
+  "dependencies": {
+    "@composio/core": "0.25.0",
+    "@fastify/cookie": "11.1.3",
+    "@fastify/helmet": "13.2.0",
+    "@fastify/static": "10.1.6",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@node-rs/argon2": "2.2.2",
+    "@openai/codex-sdk": "0.163.0",
+    "fastify": "5.12.7",
+    "idb": "8.0.4",
+    "leaflet": "1.9.4",
+    "lucide-react": "1.59.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/leaflet": "1.9.21",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "3.9.10",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

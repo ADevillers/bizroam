@@ -1,0 +1,88 @@
+name: bizroam
+x-runtime: &runtime
+  image: bizroam:${RELEASE:?Set RELEASE}
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+  restart: unless-stopped
+  read_only: true
+  user: "1000:1000"
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000"]
+  pids_limit: 128
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+services:
+  web:
+    <<: *runtime
+    command: [node, dist/services/web/src/index.js]
+    env_file: ["${SECRETS_DIR:?Set SECRETS_DIR}/web.env"]
+    environment:
+      APP_ORIGIN: https://bizroam.wip.dev.furet.network
+      TOOLS_URL: http://tools:3001
+      TRUSTED_PROXY: 172.18.0.2
+      DB_PATH: /data/web.sqlite
+    volumes: ["${DATA_DIR:?Set DATA_DIR}/web:/data"]
+    networks: [proxy, ingress]
+    mem_limit: 256m
+    cpus: 0.5
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.routers.bizroam-wip.entrypoints: web-public
+      traefik.http.routers.bizroam-wip.rule: Host(`bizroam.wip.dev.furet.network`)
+      traefik.http.routers.bizroam-wip.service: bizroam-wip
+      traefik.http.services.bizroam-wip.loadbalancer.server.port: "3000"
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  tools:
+    <<: *runtime
+    command: [node, dist/services/tools/src/index.js]
+    env_file: ["${SECRETS_DIR}/tools.env"]
+    environment:
+      DB_PATH: /data/tools.sqlite
+    volumes: ["${DATA_DIR}/tools:/data"]
+    networks: [ingress, agent, egress]
+    mem_limit: 512m
+    cpus: 1
+    labels: { traefik.enable: "false" }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  worker:
+    <<: *runtime
+    command: [node, dist/services/worker/src/index.js]
+    env_file: ["${SECRETS_DIR}/worker.env"]
+    environment:
+      TOOLS_URL: http://tools:3001
+      CODEX_HOME: /codex
+      AGENT_WORKSPACE: /workspace
+    volumes: ["${DATA_DIR}/codex:/codex", "${DATA_DIR}/workspace:/workspace"]
+    networks: [agent, egress]
+    mem_limit: 1g
+    cpus: 1
+    labels: { traefik.enable: "false" }
+networks:
+  proxy: { external: true }
+  ingress: { internal: true }
+  agent: { internal: true }
+  egress: {}
