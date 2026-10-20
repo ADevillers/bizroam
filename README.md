@@ -1,5 +1,7 @@
 # Bizroam ↗
 
+> **On standby — 20 October 2026.** The WIP deployment is down, research is disabled, and the dedicated Codex worker is signed out. Code and persistent data are retained. The architecture below describes the hackathon MVP; see the [proposed post-hackathon direction](docs/post-hackathon.md) for a version without LLMs or paid APIs.
+
 Discover the companies hiding in plain sight.
 
 Bizroam is a personal company discovery agent with a live map, configurable interests, sourced profiles, and a collection of the businesses you pass. Codex chooses what to investigate, OpenStreetMap supplies the map and office locations, Composio finds public Hacker News discussions, and Parallel verifies and researches the companies.
